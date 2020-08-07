@@ -29,14 +29,12 @@ const sendWelcomeEmail =  async (email, name) => {
 
     try {
        await sgMail.send(message);
-       console.log('Message sent');
-
     } catch(error) {
         console.log(error)
     }
 }
 
-const sendGoodbyEmail =  async (email, name) => {
+const sendGoodbyEmail = async (email, name) => {
     let message = {
         to: email,
         from: 'romasemenyshyn@gmail.com',
@@ -47,7 +45,6 @@ const sendGoodbyEmail =  async (email, name) => {
 
     try {
        await sgMail.send(message);
-       console.log('Message sent');
 
     } catch(error) {
         console.log(error)
