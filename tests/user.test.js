@@ -24,7 +24,8 @@ beforeEach(async() => {
 });
 
 test('Should sign up a new user', async() => {
-    const response = await request(app).post('/users').send({
+    const response = await request(app)
+    .post('/users').send({
         name: 'Romanna',
         email: 'romasemenyshyn+4@gmail.com',
         password: 'qwerty123'
@@ -52,7 +53,8 @@ test('Should sign up a new user', async() => {
 });
 
 test('Should log in existing user', async() => {
-    const response = await request(app).post('/users/login').send({
+    const response = await request(app)
+    .post('/users/login').send({
         email: userOne.email,
         password: userOne.password
     }).expect(200)
@@ -65,7 +67,8 @@ test('Should log in existing user', async() => {
 })
 
 test('Should not log non existing user', async() => {
-    await request(app).post('/users/login').send({
+    await request(app)
+    .post('/users/login').send({
         email: userOne.email,
         password: 'testpassword'
     }).expect(400)
@@ -102,4 +105,42 @@ test('Should not delete account for unauthenticated user', async() => {
         .delete('/users/me')
         .send()
         .expect(401)
+});
+
+
+test('Should upload avatar image', async() => {
+    await request(app)
+    .post('/users/me/avatar')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .attach('avatar', 'tests/fixtures/profile-pic.jpg')
+    .expect(200)
+
+    const user = await User.findById(userOneId);
+    expect(user.avatar).toEqual(expect.any(Buffer));
+});
+
+
+test('Should update user profile', async() => {
+    await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({name: 'Johana'})
+    .expect(200);
+
+
+    const user = await User.findById(userOneId);
+    expect(user.name).toBe('Johana');
+});
+
+
+test('Should not update user profile with non existing fileds', async() => {
+    await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({location: 'West Cost'})
+    .expect(400);
+
+
+    const user = await User.findById(userOneId);
+    expect(user.name).not.toHaveProperty('location')
 });
