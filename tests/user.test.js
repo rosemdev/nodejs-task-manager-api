@@ -1,27 +1,10 @@
 const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/models/user')
-const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
+const {userOne, userOneId,setupDatabase} = require('./fixtures/db')
 
 
-const userOneId = new mongoose.Types.ObjectId();
-
-const userOne = {
-    _id: userOneId,
-    name: 'mike',
-    email: 'mike@example.com',
-    password: 'qwerty123',
-    tokens: [{
-        token: jwt.sign({_id: userOneId}, process.env.JWT_SECRET)
-    }]
-}
-
-beforeEach(async() => {
-    await User.deleteMany();
-    await new User(userOne).save();
-
-});
+beforeEach(setupDatabase);
 
 test('Should sign up a new user', async() => {
     const response = await request(app)
@@ -142,5 +125,5 @@ test('Should not update user profile with non existing fileds', async() => {
 
 
     const user = await User.findById(userOneId);
-    expect(user.name).not.toHaveProperty('location')
+    expect(user.name).not.toHaveProperty('location');
 });
