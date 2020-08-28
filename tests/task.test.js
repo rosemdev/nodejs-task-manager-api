@@ -138,3 +138,25 @@ test('Should fetch only completed tasks', async() => {
     expect(response.body).toHaveLength(1);
     expect(response.body[0].completed).toEqual(true);
 });
+
+test('Should fetch only incomplete tasks', async() => {
+    
+    const response = await request(app)
+    .get('/tasks')
+    .query({ completed: false })
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].completed).toEqual(false);
+});
+
+test('Should fetch page of tasks', async() => {
+    
+    const response = await request(app)
+    .get('/tasks')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+    expect(response.body).toHaveLength(2);
+});
