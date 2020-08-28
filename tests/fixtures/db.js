@@ -14,14 +14,30 @@ const userOne = {
     }]
 }
 
+const userTwoId = new mongoose.Types.ObjectId();
+
+const userTwo = {
+    _id: userTwoId,
+    name: 'deny',
+    email: 'deny@example.com',
+    password: 'qwerty123',
+    tokens: [{
+        token: jwt.sign({_id: userTwoId}, process.env.JWT_SECRET)
+    }]
+}
+
 
 const setupDatabase = async() => {
     await User.deleteMany();
     await new User(userOne).save();
+    await new User(userTwo).save();
 }
 
 module.exports = {
     userOne,
     userOneId,
-    setupDatabase
+    setupDatabase,
+    userTwo,
+    userTwoId
+    
 }
