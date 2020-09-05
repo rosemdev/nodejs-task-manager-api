@@ -11,7 +11,7 @@ const testTask = {
     _id: userOneTaskId,
     description: 'test task description',
     completed: false,
-    owner: userOneId
+    owner: userOneId,
 }
 
 const secondTestTask = {
@@ -26,7 +26,7 @@ beforeEach(setupDatabase);
 beforeEach(async()=> {
     await Task.deleteMany();
     await new Task(testTask).save();
-    await new Task(secondTestTask).save();
+    await new Task(secondTestTask).save();    
 });
 
 test('Should create taks for user', async() => {
@@ -67,6 +67,21 @@ test('Should not update task with invalid description/completed', async() => {
     const task = await Task.findById(userOneTaskId);
     expect(task.description).toEqual(testTask.description);
     expect(task.completed).toEqual(testTask.completed);
+});
+
+test('Should not update task with invalid fields', async() => {
+
+    const response = await request(app)
+    .patch(`/tasks/${userOneTaskId}`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({
+        height: 555,
+        color: 'blue'
+    }).expect(400);
+
+    const task = await Task.findById(userOneTaskId);
+    expect(task).not.toHaveProperty('height');
+    expect(task).not.toHaveProperty('color');
 });
 
 test('Should delete user task', async() => {
@@ -151,7 +166,7 @@ test('Should fetch only incomplete tasks', async() => {
     expect(response.body[0].completed).toEqual(false);
 });
 
-test('Should fetch page of tasks', async() => {
+test('Should fetch all of tasks', async() => {
     
     const response = await request(app)
     .get('/tasks')
@@ -160,3 +175,66 @@ test('Should fetch page of tasks', async() => {
 
     expect(response.body).toHaveLength(2);
 });
+
+test('Should fetch number of tasks', async() => {
+    
+    const response = await request(app)
+    .get('/tasks')
+    .query({ limit: 1 })
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+    expect(response.body).toHaveLength(1);
+});
+
+test('Should skip number of tasks', async() => {
+    
+    const response = await request(app)
+    .get('/tasks')
+    .query({ skip: 1 })
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]._id).toEqual(userOneTaskTwoId.toString());
+});
+
+test('Should sort tasks by createdAt desc', async() => {
+    
+    const response = await request(app)
+    .get('/tasks')
+    .query({ sortBy: "createdAt:desc" })
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+   
+    const createdAtFirstRespEl = new Date(response.body[0].createdAt).getTime(); //newest > more time form 1 Jan 1970
+    const createdAtsecondRespEl = new Date(response.body[1].createdAt).getTime(); //oldest > less time form 1 Jan 970
+
+    expect(createdAtFirstRespEl).toBeGreaterThan(createdAtsecondRespEl);
+    
+});
+
+test('Should sort tasks by updatedAt desc', async() => {
+
+    const updateResponse = await request(app)
+    .patch(`/tasks/${userOneTaskId}`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({
+        description: "new Updated description",
+    }).expect(200);
+    
+    const response = await request(app)
+    .get('/tasks')
+    .query({ sortBy: "updatedAt:desc" })
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .expect(200);
+
+    const updatedAtFirtsRespEl = new Date(response.body[0].updatedAt).getTime(); //updated last > more time form 1 Jan 1970
+    const updatedAtsecondRespEl = new Date(response.body[1].updatedAt).getTime(); //not updated > less time form 1 Jan 970
+
+    expect(updatedAtFirtsRespEl).toBeGreaterThan(updatedAtsecondRespEl);
+    
+});
+
+
